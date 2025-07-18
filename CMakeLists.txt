@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.14)
 
 project(sbfoster_midas_unpacking_pipeline_plugin VERSION 1.0 LANGUAGES CXX)
 
+# Set the project namespace; overrideable by parent scope if desired
+if(NOT DEFINED PROJECT_NAMESPACE)
+  set(PROJECT_NAMESPACE analysis_pipeline)
+endif()
+
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -17,38 +23,6 @@ include(CMakePackageConfigHelpers)
 
 # ---- CPM Setup ----
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CPM.cmake)
-
-# ---- Header-only dependencies ----
-CPMAddPackage(
-  NAME spdlog
-  GITHUB_REPOSITORY gabime/spdlog
-  VERSION 1.13.0
-  OPTIONS "SPDLOG_FMT_EXTERNAL OFF" "SPDLOG_BUILD_TESTS OFF" "SPDLOG_BUILD_EXAMPLES OFF"
-  DOWNLOAD_ONLY YES
-)
-if(spdlog_ADDED)
-  add_library(spdlog_header_only INTERFACE)
-  target_include_directories(spdlog_header_only INTERFACE
-    $<BUILD_INTERFACE:${spdlog_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  )
-  add_library(spdlog::spdlog ALIAS spdlog_header_only)
-endif()
-
-CPMAddPackage(
-  NAME nlohmann_json
-  GITHUB_REPOSITORY nlohmann/json
-  VERSION 3.11.3
-  DOWNLOAD_ONLY YES
-)
-if(nlohmann_json_ADDED)
-  add_library(nlohmann_json_header_only INTERFACE)
-  target_include_directories(nlohmann_json_header_only INTERFACE
-    $<BUILD_INTERFACE:${nlohmann_json_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
-  )
-  add_library(nlohmann_json::nlohmann_json ALIAS nlohmann_json_header_only)
-endif()
 
 # ---- MIDAS (external) ----
 if(NOT DEFINED ENV{MIDASSYS})
@@ -73,7 +47,8 @@ set(ROOT_LINKDEF include/LinkDef.h)
 
 # ---- Build plugin library ----
 add_library(${PROJECT_NAME} SHARED ${SOURCES})
-add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(${PROJECT_NAMESPACE}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+add_library(${PROJECT_NAMESPACE}::sbfoster_midas_unpacking_pipeline ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME}
   PUBLIC
@@ -91,10 +66,11 @@ endforeach()
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
     ROOT::Core ROOT::RIO ROOT::Tree ROOT::Hist
-    spdlog::spdlog
-    nlohmann_json::nlohmann_json
-    analysis_pipeline_core::analysis_pipeline_core
-    midas_event_unpacker_plugin::midas_event_unpacker_plugin
+    analysis_pipeline::spdlog_header_only
+    analysis_pipeline::nlohmann_json_header_only
+    analysis_pipeline::analysis_pipeline_core
+    analysis_pipeline::unpacker_data_products_core
+    analysis_pipeline::midas_event_unpacker_plugin
     unpacker::common_data_products
     unpacker::common_unpacking
     unpacker::nalu_data_products
@@ -147,9 +123,9 @@ set(PLUGIN_ROOT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/include/analysis_pipeline/${PL
 set(ROOT_LINKDEF ${PLUGIN_ROOT_PATH}/LinkDef.h)
 set(ROOT_DICTIONARY_INCLUDE_OPTIONS "-I${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-append_target_includes_to_root_dict(analysis_pipeline_core::analysis_pipeline_core)
-append_target_includes_to_root_dict(unpacker_data_products_core::unpacker_data_products_core)
-append_target_includes_to_root_dict(midas_event_unpacker_plugin::midas_event_unpacker_plugin)
+append_target_includes_to_root_dict(analysis_pipeline::analysis_pipeline_core)
+append_target_includes_to_root_dict(analysis_pipeline::unpacker_data_products_core)
+append_target_includes_to_root_dict(analysis_pipeline::midas_event_unpacker_plugin)
 append_target_includes_to_root_dict(unpacker::common_data_products)
 append_target_includes_to_root_dict(unpacker::common_unpacking)
 append_target_includes_to_root_dict(unpacker::nalu_data_products)
@@ -196,20 +172,6 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 
-  if(TARGET spdlog_header_only)
-    install(TARGETS spdlog_header_only
-      EXPORT ${PROJECT_NAME}Targets
-      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-  endif()
-
-  if(TARGET nlohmann_json_header_only)
-    install(TARGETS nlohmann_json_header_only
-      EXPORT ${PROJECT_NAME}Targets
-      INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-    )
-  endif()
-
   write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
     VERSION ${PROJECT_VERSION}
@@ -224,7 +186,7 @@ if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
 
   install(EXPORT ${PROJECT_NAME}Targets
     FILE ${PROJECT_NAME}Targets.cmake
-    NAMESPACE ${PROJECT_NAME}::
+    NAMESPACE ${PROJECT_NAMESPACE}::
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}
   )
 
