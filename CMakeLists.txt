@@ -37,7 +37,6 @@ find_package(ROOT REQUIRED COMPONENTS Core RIO Tree Hist)
 find_package(analysis_pipeline_core REQUIRED)
 find_package(unpacker_data_products_core REQUIRED)
 find_package(midas_event_unpacker_plugin REQUIRED)
-find_package(unpacker REQUIRED)
 find_package(DataProducts CONFIG REQUIRED)
 find_package(Unpackers CONFIG REQUIRED)
 
