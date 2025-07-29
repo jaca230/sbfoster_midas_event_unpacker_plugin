@@ -10,7 +10,7 @@
 #include <nlohmann/json.hpp>
 
 #include "analysis_pipeline/midas_event_unpacker/stages/midas_event_unpacker_stage.h"
-#include "unpacker/common/unpacking/EventUnpacker.hh"
+#include "unpackers/common/EventUnpacker.hh"
 
 /**
  * A generic MIDAS unpacker stage that dynamically instantiates an EventUnpacker
