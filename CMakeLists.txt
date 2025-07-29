@@ -38,6 +38,8 @@ find_package(analysis_pipeline_core REQUIRED)
 find_package(unpacker_data_products_core REQUIRED)
 find_package(midas_event_unpacker_plugin REQUIRED)
 find_package(unpacker REQUIRED)
+find_package(DataProducts CONFIG REQUIRED)
+find_package(Unpackers CONFIG REQUIRED)
 
 # ---- Sources ----
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.cpp)
@@ -71,10 +73,8 @@ target_link_libraries(${PROJECT_NAME}
     analysis_pipeline::analysis_pipeline_core
     analysis_pipeline::unpacker_data_products_core
     analysis_pipeline::midas_event_unpacker_plugin
-    unpacker::common_data_products
-    unpacker::common_unpacking
-    unpacker::nalu_data_products
-    unpacker::nalu_unpacking
+    DataProducts::data_products
+    Unpackers::unpackers
     ${MIDASSYS_LIB_DIR}/libmfe.a
     ${MIDASSYS_LIB_DIR}/libmidas.a
 )
@@ -126,10 +126,8 @@ set(ROOT_DICTIONARY_INCLUDE_OPTIONS "-I${CMAKE_CURRENT_SOURCE_DIR}/include")
 append_target_includes_to_root_dict(analysis_pipeline::analysis_pipeline_core)
 append_target_includes_to_root_dict(analysis_pipeline::unpacker_data_products_core)
 append_target_includes_to_root_dict(analysis_pipeline::midas_event_unpacker_plugin)
-append_target_includes_to_root_dict(unpacker::common_data_products)
-append_target_includes_to_root_dict(unpacker::common_unpacking)
-append_target_includes_to_root_dict(unpacker::nalu_data_products)
-append_target_includes_to_root_dict(unpacker::nalu_unpacking)
+append_target_includes_to_root_dict(DataProducts::data_products)
+append_target_includes_to_root_dict(Unpackers::unpackers)
 
 foreach(midas_dir IN LISTS MIDAS_INCLUDE_DIRS)
   list(APPEND ROOT_DICTIONARY_INCLUDE_OPTIONS "-I${midas_dir}")
